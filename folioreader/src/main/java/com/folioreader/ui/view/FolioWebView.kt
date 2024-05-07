@@ -11,8 +11,16 @@ import android.os.Looper
 import android.util.AttributeSet
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.*
+import android.view.ActionMode
 import android.view.ActionMode.Callback
+import android.view.ContextThemeWrapper
+import android.view.GestureDetector
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
@@ -20,7 +28,6 @@ import android.webkit.WebView
 import android.widget.PopupWindow
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 import androidx.core.view.GestureDetectorCompat
 import com.folioreader.Config
 import com.folioreader.Constants
@@ -157,8 +164,8 @@ class FolioWebView : WebView {
     private inner class HorizontalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
         override fun onScroll(
-            e1: MotionEvent?,
-            e2: MotionEvent?,
+            e1: MotionEvent,
+            e2: MotionEvent,
             distanceX: Float,
             distanceY: Float
         ): Boolean {
@@ -168,8 +175,8 @@ class FolioWebView : WebView {
         }
 
         override fun onFling(
-            e1: MotionEvent?,
-            e2: MotionEvent?,
+            e1: MotionEvent,
+            e2: MotionEvent,
             velocityX: Float,
             velocityY: Float
         ): Boolean {
@@ -189,7 +196,7 @@ class FolioWebView : WebView {
             return true
         }
 
-        override fun onDown(event: MotionEvent?): Boolean {
+        override fun onDown(event: MotionEvent): Boolean {
             //Log.v(LOG_TAG, "-> onDown -> " + event.toString());
 
             eventActionDown = MotionEvent.obtain(event)
@@ -223,8 +230,8 @@ class FolioWebView : WebView {
     private inner class VerticalGestureListener : GestureDetector.SimpleOnGestureListener() {
 
         override fun onScroll(
-            e1: MotionEvent?,
-            e2: MotionEvent?,
+            e1: MotionEvent,
+            e2: MotionEvent,
             distanceX: Float,
             distanceY: Float
         ): Boolean {
@@ -234,8 +241,8 @@ class FolioWebView : WebView {
         }
 
         override fun onFling(
-            e1: MotionEvent?,
-            e2: MotionEvent?,
+            e1: MotionEvent,
+            e2: MotionEvent,
             velocityX: Float,
             velocityY: Float
         ): Boolean {
@@ -272,11 +279,11 @@ class FolioWebView : WebView {
     fun initViewTextSelection() {
         Log.v(LOG_TAG, "-> initViewTextSelection")
 
-        val textSelectionMiddleDrawable = ContextCompat.getDrawable(
-            context,
-            R.drawable.abc_text_select_handle_middle_mtrl_dark
-        )
-        handleHeight = textSelectionMiddleDrawable?.intrinsicHeight ?: (24 * density).toInt()
+//        val textSelectionMiddleDrawable = ContextCompat.getDrawable(
+//            context,
+//            R.drawable.abc_text_select_handle_middle_mtrl_dark
+//        )
+//        handleHeight = textSelectionMiddleDrawable?.intrinsicHeight ?: (24 * density).toInt()
 
         val config = AppUtil.getSavedConfig(context)!!
         val ctw = if (config.isNightMode) {
@@ -361,10 +368,12 @@ class FolioWebView : WebView {
         val bundle = Bundle()
         bundle.putString(Constants.SELECTED_WORD, selectedText?.trim())
         dictionaryFragment.arguments = bundle
-        dictionaryFragment.show(
-            parentFragment.requireFragmentManager(),
-            DictionaryFragment::class.java.name
-        )
+        parentFragment.fragmentManager?.let {
+            dictionaryFragment.show(
+                it,
+                DictionaryFragment::class.java.name
+            )
+        }
     }
 
     private fun onHighlightColorItemsClicked(style: HighlightStyle, isAlreadyCreated: Boolean) {
@@ -419,8 +428,9 @@ class FolioWebView : WebView {
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         //Log.v(LOG_TAG, "-> onTouchEvent -> " + AppUtil.actionToString(event.getAction()));
 
-        if (event == null)
+        if (event == null) {
             return false
+        }
 
         lastTouchAction = event.action
 
@@ -835,15 +845,16 @@ class FolioWebView : WebView {
                     }
             }
         }
-
-        isScrollingRunnable?.let { uiHandler.removeCallbacks(it) }
+        isScrollingRunnable?.let {
+            uiHandler.removeCallbacks(it)
+        }
         isScrollingCheckDuration = 0
-        if (!destroyed)
+        if (!destroyed) {
             isScrollingRunnable?.let {
-                uiHandler.postDelayed(
-                    it,
-                    IS_SCROLLING_CHECK_TIMER.toLong()
-                )
+                uiHandler.postDelayed(it, IS_SCROLLING_CHECK_TIMER.toLong())
+
             }
+        }
+
     }
 }

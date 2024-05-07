@@ -108,33 +108,30 @@ public class MediaController {
     }
 
     public void setTextToSpeech(final Context context) {
-        mTextToSpeech = new TextToSpeech(context, status -> {
-            if (status != TextToSpeech.ERROR && mTextToSpeech!=null) {
-                mTextToSpeech.setLanguage(Locale.UK);
-                mTextToSpeech.setSpeechRate(0.70f);
-            }
-            if(mTextToSpeech!=null){
-                mTextToSpeech.setOnUtteranceProgressListener(
-                        new UtteranceProgressListener() {
-                            @Override
-                            public void onStart(String utteranceId) {
+        mTextToSpeech = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if (mTextToSpeech != null) {
+                    if (status != TextToSpeech.ERROR) {
+                        mTextToSpeech.setLanguage(Locale.UK);
+                        mTextToSpeech.setSpeechRate(0.70f);
+                    }
 
-                            }
-
-                            @Override
-                            public void onDone(String utteranceId) {
-                                ((AppCompatActivity) context).runOnUiThread(() -> {
-                                    if (mIsSpeaking) {
-                                        callbacks.highLightTTS();
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void onError(String utteranceId) {
-
-                            }
-                        });
+                    mTextToSpeech.setOnUtteranceCompletedListener(
+                            new TextToSpeech.OnUtteranceCompletedListener() {
+                                @Override
+                                public void onUtteranceCompleted(String utteranceId) {
+                                    ((AppCompatActivity) context).runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            if (mIsSpeaking) {
+                                                callbacks.highLightTTS();
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                }
             }
         });
     }
